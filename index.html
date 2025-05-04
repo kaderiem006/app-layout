@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Information Form</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/1.6.5/flowbite.min.css" rel="stylesheet">
+    <style>
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal.active {
+            display: flex;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-6">
+
+    <div class="container mx-auto">
+        <h1 class="text-2xl font-bold mb-4">Personal Information Form</h1>
+        <button id="openFormButton" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">Add New Record</button>
+        <div id="formModal" class="modal">
+            <form id="myForm" class="bg-white shadow-md rounded-lg p-6">
+                <input type="hidden" id="editIndex" value="">
+                <div class="mb-4">
+                    <label for="name" class="block text-sm font-medium text-gray-700">Name</label>
+                    <input type="text" id="name" name="name" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div class="mb-4">
+                    <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                    <input type="email" id="email" name="email" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div class="mb-4">
+                    <label for="phone" class="block text-sm font-medium text-gray-700">Phone</label>
+                    <input type="tel" id="phone" name="phone" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div class="mb-4">
+                    <label for="address" class="block text-sm font-medium text-gray-700">Address</label>
+                    <textarea id="address" name="address" rows="3" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"></textarea>
+                </div>
+                <div class="flex justify-end">
+                    <button type="button" id="closeFormButton" class="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 mr-2">Cancel</button>
+                    <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">Submit</button>
+                </div>
+            </form>
+            </form>
+        </div>
+        <table id="recordsTable" class="table-auto border-collapse border border-gray-300 w-full mt-4"></table>
+    </div>
+
+    <script>
+        const formModal = document.getElementById('formModal');
+        const openFormButton = document.getElementById('openFormButton');
+        const closeFormButton = document.getElementById('closeFormButton');
+
+        openFormButton.addEventListener('click', () => {
+            formModal.classList.add('active');
+        });
+
+        closeFormButton.addEventListener('click', () => {
+            formModal.classList.remove('active');
+            document.getElementById('myForm').reset();
+            document.getElementById('editIndex').value = '';
+        });
+
+        document.getElementById('myForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const formData = new FormData(this);
+            const email = formData.get("email");
+            const name = formData.get("name");
+            const phone = formData.get("phone");
+            const address = formData.get("address");
+            const editIndex = document.getElementById('editIndex').value;
+
+            const records = JSON.parse(localStorage.getItem('formRecords')) || [];
+
+            if (editIndex) {
+                records[editIndex] = { Name: name, Email: email, Phone: phone, Address: address };
+                document.getElementById('editIndex').value = '';
+            } else {
+                records.push({ Name: name, Email: email, Phone: phone, Address: address });
+            }
+
+            localStorage.setItem('formRecords', JSON.stringify(records));
+            populateTable(records);
+
+            this.reset();
+            formModal.classList.remove('active');
+           
+        });
+
+        function populateTable(records) {
+            const table = document.getElementById('recordsTable');
+            table.innerHTML = `
+                <tr>
+                    <th class="border border-gray-300 px-4 py-2 bg-gray-200">Name</th>
+                    <th class="border border-gray-300 px-4 py-2 bg-gray-200">Email</th>
+                    <th class="border border-gray-300 px-4 py-2 bg-gray-200">Phone</th>
+                    <th class="border border-gray-300 px-4 py-2 bg-gray-200">Address</th>
+                    <th class="border border-gray-300 px-4 py-2 bg-gray-200">Actions</th>
+                </tr>
+            `;
+
+            records.forEach((record, index) => {
+                const row = document.createElement('tr');
+                Object.values(record).forEach(value => {
+                    const cell = document.createElement('td');
+                    cell.textContent = value;
+                    cell.className = 'border border-gray-300 px-4 py-2';
+                    row.appendChild(cell);
+                });
+
+                const actionsCell = document.createElement('td');
+                actionsCell.className = 'border border-gray-300 px-4 py-2';
+
+                const menuButton = document.createElement('button');
+                menuButton.textContent = '⋮';
+                menuButton.className = 'text-gray-700 px-2 py-1 rounded-md hover:bg-gray-200';
+                menuButton.addEventListener('click', () => toggleMenu(index, actionsCell));
+
+                actionsCell.appendChild(menuButton);
+                row.appendChild(actionsCell);
+
+                table.appendChild(row);
+            });
+        }
+
+        function toggleMenu(index, cell) {
+            const menu = document.createElement('div');
+            menu.className = 'absolute bg-white shadow-md rounded-md p-2';
+
+            const editButton = document.createElement('button');
+            editButton.textContent = 'Edit';
+            editButton.className = 'block text-left w-full px-4 py-2 hover:bg-gray-100';
+            editButton.addEventListener('click', () => {
+                editRecord(index);
+                menu.remove();
+            });
+
+            const deleteButton = document.createElement('button');
+            deleteButton.textContent = 'Delete';
+            deleteButton.className = 'block text-left w-full px-4 py-2 hover:bg-gray-100';
+            deleteButton.addEventListener('click', () => {
+                deleteRecord(index);
+                menu.remove();
+            });
+
+            const cloneButton = document.createElement('button');
+            cloneButton.textContent = 'Clone';
+            cloneButton.className = 'block text-left w-full px-4 py-2 hover:bg-gray-100';
+            cloneButton.addEventListener('click', () => {
+                cloneRecord(index);
+                menu.remove();
+            });
+
+            menu.appendChild(editButton);
+            menu.appendChild(deleteButton);
+            menu.appendChild(cloneButton);
+
+            cell.appendChild(menu);
+        }
+
+        function cloneRecord(index) {
+            const records = JSON.parse(localStorage.getItem('formRecords')) || [];
+            const recordToClone = records[index];
+            records.push({ ...recordToClone });
+            localStorage.setItem('formRecords', JSON.stringify(records));
+            populateTable(records);
+        }
+
+        function editRecord(index) {
+            const records = JSON.parse(localStorage.getItem('formRecords')) || [];
+            const record = records[index];
+
+            document.getElementById('name').value = record.Name;
+            document.getElementById('email').value = record.Email;
+            document.getElementById('phone').value = record.Phone;
+            document.getElementById('address').value = record.Address;
+            document.getElementById('editIndex').value = index;
+
+            formModal.classList.add('active');
+        }
+
+        function deleteRecord(index) {
+            const records = JSON.parse(localStorage.getItem('formRecords')) || [];
+            records.splice(index, 1);
+            localStorage.setItem('formRecords', JSON.stringify(records));
+            populateTable(records);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const records = JSON.parse(localStorage.getItem('formRecords')) || [];
+            populateTable(records);
+        });
+    </script>
+</body>
+</html>

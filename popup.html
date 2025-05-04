@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Three Dots Hover</title>
+  <style>
+    .menu-container {
+      position: relative;
+      display: inline-block;
+      cursor: pointer;
+    }
+
+    .three-dots::after {
+      content: '⋮'; /* vertical three dots */
+      font-size: 24px;
+      padding: 5px;
+    }
+
+    .hover-box {
+      display: none;
+      position: absolute;
+      top: 30px;
+      right: 30;
+      background: #fff;
+      padding: 20px;
+      width: 200px;
+      border: 1px solid #ccc;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      z-index: 10;
+    }
+
+   
+  </style>
+</head>
+<body>
+
+<div class="menu-container">
+  <span id="threeDots"class="three-dots"></span>
+  <div class="hover-box">
+    <p>This is the hidden section shown on hover.</p>
+  </div>
+</div>
+<script>
+  let hoverBox = document.querySelector('.hover-box');
+  let hoverBox1 = document.querySelector('.three-dots');
+  hoverBox1.addEventListener('click', function(e) {
+    hoverBox.style.display = 'block';
+    
+  });
+  hoverBox.addEventListener('click', function(e) {
+    hoverBox.style.background = 'red';
+  });
+
+</script>
+</body>
+</html>
